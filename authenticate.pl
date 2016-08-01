@@ -96,7 +96,6 @@ sub ldap_auth {
 my $settings = Webperl::ConfigMicro -> new(path_join($path, "config", "config.cfg"))
     or die "Unable to load configuration. Error was: $ConfigMicro::errstr\n";
 
-print "Checking '".$ENV{"U"}."', '".$ENV{"P"}."'\n";
 if(!database_auth($ENV{"U"}, $ENV{"P"}, $settings)) {
     if(!ldap_auth($ENV{"U"}, $ENV{"P"}, $settings)) {
         die "User is not valid\n";
