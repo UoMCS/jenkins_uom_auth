@@ -15,7 +15,6 @@ use DBI;
 use lib qw(/var/www/webperl);
 use Webperl::Utils qw(path_join);
 use Webperl::ConfigMicro;
-use Webperl::AuthMethod::LDAP;
 
 use FindBin;             # Work out where we are
 my $path;
@@ -95,8 +94,29 @@ sub get_user_groups {
     my $username = shift;
     my $yearid   = shift;
 
+    my $groups = $dbh -> prepare("SELECT `ay`.`start_year`,`c`.`course_id`,`cg`.`name`
+                                  FROM `academic_years` AS `ay`,
+                                       `courses` AS `c`,
+                                       `course_groups` AS `cg`,
+                                       `student_course_group` AS `scg`,
+                                       `users` AS `u`
+                                  WHERE `u`.`username` LIKE ?
+                                  AND `scg`.`student_id` = `u`.`id`
+                                  AND `scg`.`active` = 1
+                                  AND `scg`.`year_id` = ?
+                                  AND `cg`.`id` = `scg`.`group_id`
+                                  AND `c`.`id` = `cg`.`course_id`
+                                  AND `ay`.`id` = ?");
 
-    return undef;
+    $groups -> execute($username, $yearid, $yearid)
+        or die "Unable to fetch user groups: ".$dbh -> errstr."\n";
+
+    my @names = ();
+    while(my $group = $groups -> fetchrow_arrayref()) {
+        push(@names, join("_", @{$group}));
+    }
+
+    return \@names;
 }
 
 
